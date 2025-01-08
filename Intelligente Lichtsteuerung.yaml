@@ -123,7 +123,10 @@ action:
   - choose:
       - conditions:
           - condition: template
-            value_template: "{{ sync_with_source and source_light and is_state(source_light, 'on') }}"
+            value_template: >
+              {{ sync_with_source and source_light and is_state(source_light, 'on') and
+                 state_attr(source_light, 'brightness') is not none and
+                 state_attr(source_light, 'rgb_color') is not none }}
         sequence:
           - service: light.turn_on
             target:
@@ -134,7 +137,22 @@ action:
 
       - conditions:
           - condition: template
-            value_template: "{{ not sync_with_source or (source_light and is_state(source_light, 'off')) }}"
+            value_template: >
+              {{ enable_night_mode and
+                 (now().time() >= strptime(night_mode_start, '%H:%M:%S').time() or
+                  now().time() <= strptime(night_mode_end, '%H:%M:%S').time()) }}
+        sequence:
+          - service: light.turn_on
+            target:
+              entity_id: !input target_light
+            data:
+              brightness_pct: !input night_mode_brightness
+              rgb_color: !input night_mode_color
+
+      - conditions:
+          - condition: template
+            value_template: >
+              {{ not sync_with_source or (source_light and is_state(source_light, 'off')) }}
           - condition: state
             entity_id: !input motion_sensor
             state: "on"
