@@ -3,7 +3,6 @@ blueprint:
   description: Flexible Steuerung einer Ziel-Lampe durch Bewegungsmelder, Quell-Lampe (optional), Nachtmodus und andere Optionen.
   domain: automation
   input:
-    # Bewegungsmelder-Modus
     target_light:
       name: Ziel-Lampe
       description: Die Lampe, die gesteuert werden soll.
@@ -48,7 +47,6 @@ blueprint:
           max: 3600
           unit_of_measurement: seconds
 
-    # Synchronisation mit Quell-Lampe
     sync_with_source:
       name: Kopieren der Quell-Lampe aktivieren
       description: Soll die Ziel-Lampe die Einstellungen der Quell-Lampe übernehmen?
@@ -63,7 +61,6 @@ blueprint:
         entity:
           domain: light
 
-    # Nachtmodus
     enable_night_mode:
       name: Nachtmodus aktivieren
       description: Soll der Nachtmodus aktiviert werden?
@@ -109,7 +106,6 @@ trigger:
     entity_id: !input source_light
 
 variables:
-  source_light: !input source_light
   target_light: !input target_light
   motion_sensor: !input motion_sensor
   motion_light_brightness: !input motion_light_brightness
@@ -121,6 +117,7 @@ variables:
   night_mode_start: !input night_mode_start
   night_mode_end: !input night_mode_end
   sync_with_source: !input sync_with_source
+  source_light: !input source_light if !input sync_with_source else null
 
 action:
   - choose:
@@ -132,10 +129,8 @@ action:
             target:
               entity_id: !input target_light
             data:
-              brightness: >
-                {{ state_attr(source_light, 'brightness') }}
-              rgb_color: >
-                {{ state_attr(source_light, 'rgb_color') }}
+              brightness: "{{ state_attr(source_light, 'brightness') }}"
+              rgb_color: "{{ state_attr(source_light, 'rgb_color') }}"
 
       - conditions:
           - condition: template
