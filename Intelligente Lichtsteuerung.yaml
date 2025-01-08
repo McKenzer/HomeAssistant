@@ -1,26 +1,26 @@
 blueprint:
-  name: Intelligente Lichtsteuerung
-  description: Flexible Steuerung einer Ziel-Lampe durch Bewegungsmelder, Quell-Lampe (optional), Nachtmodus und andere Optionen.
+  name: Intelligent Light Control
+  description: Flexible control of a target light through motion sensor, source light (optional), night mode, and other options.
   domain: automation
   input:
     target_light:
-      name: Ziel-Lampe
-      description: Die Lampe, die gesteuert werden soll.
+      name: Target Light
+      description: The lamp to be controlled.
       selector:
         entity:
           domain: light
 
     motion_sensor:
-      name: Bewegungsmelder
-      description: Der Bewegungsmelder, der die Ziel-Lampe im Bewegungsmodus steuert.
+      name: Motion Sensor
+      description: The motion sensor that controls the target light in motion mode.
       selector:
         entity:
           domain: binary_sensor
           device_class: motion
 
     motion_light_brightness:
-      name: Helligkeit (Bewegungsmelder-Modus)
-      description: Helligkeit der Ziel-Lampe im Bewegungsmodus (in %).
+      name: Brightness (Motion Sensor Mode)
+      description: Brightness of the target light in motion mode (%).
       default: 100
       selector:
         number:
@@ -29,8 +29,8 @@ blueprint:
           unit_of_measurement: "%"
 
     motion_light_color_temp:
-      name: Farbtemperatur (Bewegungsmelder-Modus)
-      description: Farbtemperatur der Ziel-Lampe im Bewegungsmodus.
+      name: Color Temperature (Motion Sensor Mode)
+      description: Color temperature of the target light in motion mode.
       default: 274
       selector:
         number:
@@ -38,8 +38,8 @@ blueprint:
           max: 500
 
     motion_light_duration:
-      name: Dauer (Bewegungsmelder-Modus)
-      description: Zeit in Sekunden, wie lange die Lampe eingeschaltet bleibt, wenn keine Bewegung mehr erkannt wird.
+      name: Duration (Motion Sensor Mode)
+      description: Time in seconds how long the light stays on when no motion is detected.
       default: 60
       selector:
         number:
@@ -48,36 +48,36 @@ blueprint:
           unit_of_measurement: seconds
 
     sync_with_source:
-      name: Kopieren der Quell-Lampe aktivieren
-      description: Soll die Ziel-Lampe die Einstellungen der Quell-Lampe übernehmen?
+      name: Enable Source Light Synchronization
+      description: Should the target light adopt the settings of the source light?
       default: false
       selector:
         boolean: {}
 
     source_light:
-      name: Quell-Lampe (optional)
-      description: Die Lampe, deren Status und Einstellungen kopiert werden sollen.
+      name: Source Light (optional)
+      description: The light whose status and settings should be copied.
       selector:
         entity:
           domain: light
 
     enable_night_mode:
-      name: Nachtmodus aktivieren
-      description: Soll der Nachtmodus aktiviert werden?
+      name: Enable Night Mode
+      description: Should night mode be activated?
       default: false
       selector:
         boolean: {}
 
     night_mode_color:
-      name: Farbe (Nachtmodus)
-      description: Farbe der Ziel-Lampe im Nachtmodus.
+      name: Color (Night Mode)
+      description: Color of the target light in night mode.
       default: [255, 153, 0]
       selector:
         color_rgb: {}
 
     night_mode_brightness:
-      name: Helligkeit (Nachtmodus)
-      description: Helligkeit der Ziel-Lampe im Nachtmodus (in %).
+      name: Brightness (Night Mode)
+      description: Brightness of the target light in night mode (%).
       default: 30
       selector:
         number:
@@ -86,15 +86,15 @@ blueprint:
           unit_of_measurement: "%"
 
     night_mode_start:
-      name: Nachtmodus Startzeit
-      description: Uhrzeit, ab wann der Nachtmodus aktiv sein soll.
+      name: Night Mode Start Time
+      description: Time when night mode should start.
       default: "22:00:00"
       selector:
         time: {}
 
     night_mode_end:
-      name: Nachtmodus Endzeit
-      description: Uhrzeit, bis wann der Nachtmodus aktiv sein soll.
+      name: Night Mode End Time
+      description: Time when night mode should end.
       default: "06:00:00"
       selector:
         time: {}
