@@ -117,7 +117,7 @@ variables:
   night_mode_start: !input night_mode_start
   night_mode_end: !input night_mode_end
   sync_with_source: !input sync_with_source
-  source_light: !input source_light if !input sync_with_source else null
+  source_light: !input source_light
 
 action:
   - choose:
