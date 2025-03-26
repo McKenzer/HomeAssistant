@@ -1,0 +1,320 @@
+blueprint:
+  name: Paulmann 4 Button Wall Switch
+  description: >-
+    Create automations for the four-button Paulmann wall switch. This blueprint 
+    only supports ZHA. If you dim up while the light is off, it will turn on at the minimum
+    brightness you selected. If you dim it all the way down, it will stop dimming when it reaches 
+    the minimum brightness.
+  domain: automation
+  input:
+    paulmann_switch:
+      name: Paulmann Switch
+      description: Select the Switch
+      selector:
+        device:
+          filter:
+            - integration: zha
+              model: '501.34'
+    light_left:
+      name: Left Buttons
+      description: >-
+        Select the lights to be controlled via the buttons on the left
+        side of the switch. If you want to control multiple lights, you must
+        create a ZHA group.
+      selector:
+        entity:
+          domain:
+            - light
+    light_right:
+      name: Right Buttons
+      description: >-
+        Select the lights to be controlled via the buttons on the right
+        side of the switch. If you want to control multiple lights, you must
+        create a ZHA group.
+      selector:
+        entity:
+          domain:
+            - light
+    brightness_step_percent:
+      name: Brightness Step Size
+      description: >-
+        How much the brightness of the light will change in each step during dimming (in %).
+        Default: 5
+      default: 5
+      selector:
+        number:
+          min: 0
+          max: 10
+          step: 1
+          mode: slider
+    delay_ms:
+      name: Delay
+      description: 'Delay after each brightness change during dimming (in ms, default: 200)'
+      default: 200
+      selector:
+        number:
+          min: 50
+          max: 1000
+          step: 50
+          mode: slider
+    transition_speed:
+      name: Transition Speed
+      description: >-
+        Set this to the same value as Delay to get a smooth dimming effect (in ms,
+        default: 200)
+      default: 200
+      selector:
+        number:
+          min: 0
+          max: 1000
+          step: 50
+          mode: slider
+    minimal_brightness:
+      name: Minimal Brightness
+      description: >-
+        Dimming down stops at this value. Dimming up while the light is off
+        will turn on the light at this value. The range is from 0 (off)
+        to 255 (maximum brightness). Default: 15
+      default: 15
+      selector:
+        number:
+          min: 0
+          max: 255
+          step: 5
+          mode: slider
+mode: restart
+trigger:
+  - device_id: !input paulmann_switch
+    domain: zha
+    platform: device
+    type: remote_button_short_press
+    subtype: button_1
+    id: btn1_press
+  - device_id: !input paulmann_switch
+    domain: zha
+    platform: device
+    type: remote_button_short_press
+    subtype: button_2
+    id: btn2_press
+  - device_id: !input paulmann_switch
+    domain: zha
+    platform: device
+    type: remote_button_short_press
+    subtype: button_3
+    id: btn3_press
+  - device_id: !input paulmann_switch
+    domain: zha
+    platform: device
+    type: remote_button_short_press
+    subtype: button_4
+    id: btn4_press
+  - device_id: !input paulmann_switch
+    domain: zha
+    platform: device
+    type: remote_button_long_press
+    subtype: button_1
+    id: btn1_longpress
+  - device_id: !input paulmann_switch
+    domain: zha
+    platform: device
+    type: remote_button_long_press
+    subtype: button_2
+    id: btn2_longpress
+  - device_id: !input paulmann_switch
+    domain: zha
+    platform: device
+    type: remote_button_long_press
+    subtype: button_3
+    id: btn3_longpress
+  - device_id: !input paulmann_switch
+    domain: zha
+    platform: device
+    type: remote_button_long_press
+    subtype: button_4
+    id: btn4_longpress
+  - device_id: !input paulmann_switch
+    domain: zha
+    platform: device
+    type: remote_button_long_release
+    subtype: button_1
+    id: btn12_release
+  - device_id: !input paulmann_switch
+    domain: zha
+    platform: device
+    type: remote_button_long_release
+    subtype: button_3
+    id: btn34_release
+action:
+  - variables:
+      helper_brightness_step_pos: !input brightness_step_percent
+      helper_brightness_step_neg: '{{ helper_brightness_step_pos |int * -1 }}'
+      helper_transition_speed_ms: !input transition_speed
+      helper_transition_speed: '{{ helper_transition_speed_ms |int / 1000 }}'
+      helper_delay_ms: !input delay_ms
+  - choose:
+      - conditions:
+          - condition: trigger
+            id:
+              - btn1_press
+        sequence:
+          - service: light.turn_on
+            target:
+              entity_id: !input light_left
+      - conditions:
+          - condition: trigger
+            id:
+              - btn2_press
+        sequence:
+          - service: light.turn_off
+            target:
+              entity_id: !input light_left
+      - conditions:
+          - condition: trigger
+            id:
+              - btn3_press
+        sequence:
+          - service: light.turn_on
+            target:
+              entity_id: !input light_right
+      - conditions:
+          - condition: trigger
+            id:
+              - btn4_press
+        sequence:
+          - service: light.turn_off
+            target:
+              entity_id: !input light_right
+      - conditions:
+          - condition: trigger
+            id:
+              - btn1_longpress
+        sequence:
+          - if:
+              - condition: state
+                entity_id: !input light_left
+                state: 'off'
+            then:
+              - service: light.turn_on
+                target:
+                  entity_id: !input light_left
+                data:
+                  brightness: !input minimal_brightness
+              - delay:
+                  hours: 0
+                  minutes: 0
+                  seconds: 0
+                  milliseconds: '{{ helper_delay_ms }}'
+          - repeat:
+              sequence:
+                - service: light.turn_on
+                  target:
+                    entity_id: !input light_left
+                  data:
+                    brightness_step_pct: '{{ helper_brightness_step_pos }}'
+                    transition: '{{ helper_transition_speed }}'
+                - delay:
+                    hours: 0
+                    minutes: 0
+                    seconds: 0
+                    milliseconds: '{{ helper_delay_ms }}'
+              while:
+                - condition: numeric_state
+                  entity_id: !input light_left
+                  attribute: brightness
+                  below: 255
+                - condition: trigger
+                  id:
+                    - btn1_longpress
+      - conditions:
+          - condition: trigger
+            id:
+              - btn2_longpress
+        sequence:
+          - repeat:
+              sequence:
+                - service: light.turn_on
+                  target:
+                    entity_id: !input light_left
+                  data:
+                    brightness_step_pct: '{{ helper_brightness_step_neg }}'
+                    transition: '{{ helper_transition_speed }}'
+                - delay:
+                    hours: 0
+                    minutes: 0
+                    seconds: 0
+                    milliseconds: '{{ helper_delay_ms }}'
+              while:
+                - condition: numeric_state
+                  entity_id: !input light_left
+                  attribute: brightness
+                  above: !input minimal_brightness
+                - condition: trigger
+                  id:
+                    - btn2_longpress
+      - conditions:
+          - condition: trigger
+            id:
+              - btn3_longpress
+        sequence:
+          - if:
+              - condition: state
+                entity_id: !input light_right
+                state: 'off'
+            then:
+              - service: light.turn_on
+                target:
+                  entity_id: !input light_right
+                data:
+                  brightness: !input minimal_brightness
+              - delay:
+                  hours: 0
+                  minutes: 0
+                  seconds: 0
+                  milliseconds: '{{ helper_delay_ms }}'
+          - repeat:
+              sequence:
+                - service: light.turn_on
+                  data:
+                    brightness_step_pct: '{{ helper_brightness_step_pos }}'
+                    transition: '{{ helper_transition_speed }}'
+                  target:
+                    entity_id: !input light_right
+                - delay:
+                    hours: 0
+                    minutes: 0
+                    seconds: 0
+                    milliseconds: '{{ helper_delay_ms }}'
+              while:
+                - condition: numeric_state
+                  entity_id: !input light_right
+                  attribute: brightness
+                  below: 255
+                - condition: trigger
+                  id:
+                    - btn3_longpress
+      - conditions:
+          - condition: trigger
+            id:
+              - btn4_longpress
+        sequence:
+          - repeat:
+              sequence:
+                - service: light.turn_on
+                  target:
+                    entity_id: !input light_right
+                  data:
+                    brightness_step_pct: '{{ helper_brightness_step_neg }}'
+                    transition: '{{ helper_transition_speed }}'
+                - delay:
+                    hours: 0
+                    minutes: 0
+                    seconds: 0
+                    milliseconds: '{{ helper_delay_ms }}'
+              while:
+                - condition: numeric_state
+                  entity_id: !input light_right
+                  attribute: brightness
+                  above: !input minimal_brightness
+                - condition: trigger
+                  id:
+                    - btn4_longpress
